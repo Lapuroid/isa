@@ -1,0 +1,16 @@
+# Don't track node_modules
+node_modules/
+
+# Don't track environment variables
+.env
+
+# Don't track log files
+*.log
+
+# Don't track system files
+.DS_Store
+Thumbs.db
+
+# Optional: IDE configs
+.vscode/
+.idea/
