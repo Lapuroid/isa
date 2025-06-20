@@ -1,61 +1,61 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>📭 Monthly Messages</title>
+  <title>💬 Login</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 2rem; }
-    .msg { border-bottom: 1px solid #ccc; margin-bottom: 1rem; padding-bottom: 0.5rem; }
-    input, textarea { width: 100%; margin: 0.5rem 0; padding: 0.5rem; }
-    button { padding: 0.5rem 1rem; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f1f5f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-box {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      width: 300px;
+      text-align: center;
+    }
+    select, button {
+      width: 100%;
+      padding: 0.6rem;
+      margin-top: 1rem;
+      font-size: 1rem;
+    }
+    button {
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <h2>📬 Submit Your Monthly Message</h2>
-  <form id="msgForm">
-    <input type="text" id="name" placeholder="Your name" required />
-    <input type="text" id="month" placeholder="Month (e.g. June 2025)" required />
-    <textarea id="content" placeholder="Your message..." required></textarea>
-    <button type="submit">Submit</button>
-  </form>
 
-  <h2>📚 All Messages</h2>
-  <div id="messages"></div>
+<div class="login-box">
+  <h2>👤 Choose Your Name</h2>
+  <select id="userSelect" required>
+    <option value="">-- Select --</option>
+    <option value="Ayush">Ayush</option>
+    <option value="Reet">Reet</option>
+    <option value="Saanvi">Saanvi</option>
+    <option value="Anvika">Anvika</option>
+  </select>
+  <button onclick="login()">Enter Chat</button>
+</div>
 
-  <script>
-    async function loadMessages() {
-      const res = await fetch('/api/messages');
-      const data = await res.json();
-      const container = document.getElementById('messages');
-      container.innerHTML = data.map(m => `
-        <div class="msg">
-          <strong>${m.name}</strong> <em>(${m.month})</em><br>
-          ${m.content}
-        </div>
-      `).join('');
-    }
+<script>
+  function login() {
+    const name = document.getElementById('userSelect').value;
+    if (!name) return alert("Please select your name");
+    localStorage.setItem('username', name);
+    window.location.href = "chat.html";
+  }
+</script>
 
-    document.getElementById('msgForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = document.getElementById('name').value;
-      const month = document.getElementById('month').value;
-      const content = document.getElementById('content').value;
-
-      const res = await fetch('/api/message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, month, content })
-      });
-
-      if (res.ok) {
-        alert('Message submitted!');
-        e.target.reset();
-        loadMessages();
-      } else {
-        alert('Error submitting message.');
-      }
-    });
-
-    loadMessages();
-  </script>
 </body>
 </html>
