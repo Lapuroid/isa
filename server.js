@@ -118,6 +118,17 @@ function authenticateToken(req, res, next) {
   });
 }
 
+app.get('/api/keepalive', async (req, res) => {
+  try {
+    await Message.findOne({});  // simple query to ping DB
+    res.status(200).send('DB awake');
+  } catch (err) {
+    console.error('Keepalive error:', err);
+    res.status(500).send('Error');
+  }
+});
+
+
 // Upload
 app.post('/upload', parser.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
