@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>🔍 Recover Access</title>
+  <link rel="icon" href="favicon.png" type="image/png" />
+  <style>
+    body {
+  font-family: 'Segoe UI', sans-serif;
+  background: 
+    linear-gradient(rgba(50, 50, 50, 0.5), rgba(50, 50, 50, 0.5)),
+    url('background2.jpg') no-repeat center center fixed;
+  background-size: cover;
+  filter: brightness(1.1); /* Slightly brighten the entire background */
+  color: #e0e0e0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+    .box {
+      background: rgba(30, 30, 30, 0.85);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.7);
+      width: 400px;
+      color: #e0e0e0;
+      backdrop-filter: blur(6px);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #e0e0e0;
+    }
+    input, button {
+      width: 100%;
+      padding: 0.6rem;
+      font-size: 1rem;
+      margin-top: 0.8rem;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background-color: #2a2a2a;
+      color: #e0e0e0;
+      box-sizing: border-box;
+    }
+    input::placeholder {
+      color: #999;
+    }
+    button {
+      background: #5865f2;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    button:hover {
+      background: #4752c4;
+    }
+    #result {
+      margin-top: 1rem;
+      font-size: 0.95rem;
+      color: #7fff7f; /* lighter green */
+      white-space: pre-wrap;
+      text-align: center;
+      word-wrap: break-word;
+    }
+    label {
+      font-weight: 600;
+      margin-top: 1rem;
+      display: block;
+      color: #ccc;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h2>Recovery</h2>
+  <input type="text" id="username" placeholder="Your name (e.g. Ayush)" />
+  
+  <label for="ans1">When was the shithole made?</label>
+  <input type="text" id="ans1" placeholder="Answer 1" />
+  
+  <label for="ans2">KMB seller's fav pastime?</label>
+  <input type="text" id="ans2" placeholder="Answer 2" />
+  
+  <label for="ans3">Who is no neuron gay for?</label>
+  <input type="text" id="ans3" placeholder="Answer 3" />
+  
+  <label for="ans4">What does onlyskill-noissue do on userphone?</label>
+  <input type="text" id="ans4" placeholder="Answer 4" />
+  
+  <label for="ans5">What was the 4th question?</label>
+  <input type="text" id="ans5" placeholder="Answer 5" />
+  
+  <button onclick="recover()">Recover</button>
+  <div id="result"></div>
+</div>
+
+<script>
+  async function recover() {
+    const username = document.getElementById('username').value.toLowerCase().trim();
+    const answers = [
+      document.getElementById('ans1').value.trim(),
+      document.getElementById('ans2').value.trim(),
+      document.getElementById('ans3').value.trim(),
+      document.getElementById('ans4').value.trim(),
+      document.getElementById('ans5').value.trim()
+    ];
+
+    const filledCount = answers.filter(ans => ans !== '').length;
+
+    if (!username) {
+      return alert("Please enter your username");
+    }
+    if (filledCount < 3) {
+      return alert("Please fill at least 3 answers");
+    }
+
+    for(let i = 0; i < answers.length; i++) {
+      if (!answers[i]) answers[i] = "";
+    }
+
+    try {
+      const res = await fetch('/api/recover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, answers })
+      });
+
+      const resultDiv = document.getElementById('result');
+
+      if (!res.ok) {
+        const msg = await res.text();
+        resultDiv.style.color = 'red';
+        resultDiv.textContent = "❌ " + msg;
+        return;
+      }
+
+      const data = await res.json();
+      resultDiv.style.color = '#7fff7f';
+      resultDiv.textContent = `✅ Username: your irl name duh\n(the first name, no surname)\n✅ Password: ${data.codeword}`;
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  }
+</script>
+
+</body>
+</html>

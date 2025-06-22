@@ -208,7 +208,7 @@
       const nearBottom = box.scrollHeight - box.scrollTop <= box.clientHeight + 150;
 
       box.innerHTML = data.map(m => {
-        const side = m.name === user ? 'right' : 'left';
+        const side = m.name.toLowerCase() === user.toLowerCase() ? 'right' : 'left';
         const bg = userColors[m.name] || '#6b7280';
         return `
           <div class="msg ${side}">
