@@ -156,50 +156,51 @@
 
 <script>
   const user = localStorage.getItem('username');
-  if (!user) window.location.href = "index.html";
+  if (!user) window.location.href = "login.html";
 
-  const userColors = {
-    Ayush: '#4f46e5',
-    Reet: '#10b981',
-    Saanvi: '#ec4899',
-    Anvika: '#f59e0b'
+  const displayNames = {
+    ayush: "Ayush",
+    reet: "Reet",
+    saanvi: "Saanvi",
+    anvika: "Anvika",
+    ahaana: "Ahaana",
+    vaasu: "Vaasu",
   };
 
-  // --- JWT auto logout wrapper ---
+  const userColors = {
+    Ayush: '#ffdeb5',
+    Reet: '#e2b8ff',
+    Saanvi: '#fce6e6',
+    Anvika: '#fff200',
+    Ahaana: '#0095ff',
+    Vaasu: '#31d9e8',
+  };
+
   async function authFetch(url, options = {}) {
     if (!options.headers) options.headers = {};
     const token = localStorage.getItem('token');
-    if (token) {
-      options.headers['Authorization'] = `Bearer ${token}`;
-    }
-
+    if (token) options.headers['Authorization'] = `Bearer ${token}`;
     const res = await fetch(url, options);
-
     if (res.status === 401) {
       alert("Session expired. Please log in again.");
-      localStorage.removeItem('username');
-      localStorage.removeItem('token');
-      window.location.href = '/login.html';
+      localStorage.clear();
+      window.location.href = "login.html";
       throw new Error("Unauthorized");
     }
-
     return res;
   }
 
   function sanitizeContent(html) {
-    return html
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\n/g, '<br>')
+    return html.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/\n/g, '<br>')
       .replace(/&lt;br&gt;/g, '<br>')
       .replace(/&lt;img([^&]*)&gt;/g, '<img$1>')
       .replace(/&lt;a([^&]*)&gt;/g, '<a$1>');
   }
 
-  function getTimeAgoString(timestamp) {
+  function getTimeAgoString(ts) {
     const now = new Date();
-    const time = new Date(timestamp);
+    const time = new Date(ts);
     const seconds = Math.floor((now - time) / 1000);
     if (seconds < 60) return `just now`;
     const minutes = Math.floor(seconds / 60);
@@ -225,11 +226,14 @@
       const nearBottom = box.scrollHeight - box.scrollTop <= box.clientHeight + 150;
 
       box.innerHTML = data.map(m => {
-        const side = m.name.toLowerCase() === user.toLowerCase() ? 'right' : 'left';
-        const bg = userColors[m.name] || '#6b7280';
+        const nameKey = m.name.toLowerCase();
+        const displayName = displayNames[nameKey] || m.name;
+        const side = nameKey === user.toLowerCase() ? 'right' : 'left';
+        const bg = userColors[displayName] || '#6b7280';
+
         return `
           <div class="msg ${side}">
-            <span class="user-label" style="background:${bg}">${m.name}</span>
+            <span class="user-label" style="background:${bg}">${displayName}</span>
             <div>${m.content}</div>
             <div class="meta">${m.date} ${m.time} • <span data-timestamp="${m.timestamp}">${getTimeAgoString(m.timestamp)}</span></div>
           </div>
@@ -339,11 +343,6 @@
       messageContent += `<br><img src="${uploadedFileUrl}" style="max-width: 100%; max-height: 300px;" />`;
     }
 
-    if (messageContent.length > 5000000) {
-      alert("Message too long! Max 5MB allowed.");
-      return;
-    }
-
     const res = await authFetch('/api/message', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -363,9 +362,15 @@
   }
 
   document.getElementById('sendBtn').addEventListener('click', sendMessage);
+  document.getElementById('content').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
   setInterval(updateTimeAgoLabels, 60000);
   setInterval(updateCountdown, 3000);
-
   fetchMessages();
   fetchTokenCount();
 </script>
