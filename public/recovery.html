@@ -5,20 +5,19 @@
   <link rel="icon" href="favicon.png" type="image/png" />
   <style>
     body {
-  font-family: 'Segoe UI', sans-serif;
-  background: 
-    linear-gradient(rgba(50, 50, 50, 0.5), rgba(50, 50, 50, 0.5)),
-    url('background2.jpg') no-repeat center center fixed;
-  background-size: cover;
-  filter: brightness(1.1); /* Slightly brighten the entire background */
-  color: #e0e0e0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  margin: 0;
-}
-
+      font-family: 'Segoe UI', sans-serif;
+      background: 
+        linear-gradient(rgba(50, 50, 50, 0.5), rgba(50, 50, 50, 0.5)),
+        url('background2.jpg') no-repeat center center fixed;
+      background-size: cover;
+      filter: brightness(1.1);
+      color: #e0e0e0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
     .box {
       background: rgba(30, 30, 30, 0.85);
       padding: 2rem;
@@ -60,7 +59,7 @@
     #result {
       margin-top: 1rem;
       font-size: 0.95rem;
-      color: #7fff7f; /* lighter green */
+      color: #7fff7f;
       white-space: pre-wrap;
       text-align: center;
       word-wrap: break-word;
@@ -100,6 +99,27 @@
 </div>
 
 <script>
+  // JWT auto-logout wrapper fetch function
+  async function authFetch(url, options = {}) {
+    if (!options.headers) options.headers = {};
+    const token = localStorage.getItem('token');
+    if (token) {
+      options.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const res = await fetch(url, options);
+
+    if (res.status === 401) {
+      alert("Session expired. Please log in again.");
+      localStorage.removeItem('username');
+      localStorage.removeItem('token');
+      window.location.href = '/login.html';
+      throw new Error("Unauthorized");
+    }
+
+    return res;
+  }
+
   async function recover() {
     const username = document.getElementById('username').value.toLowerCase().trim();
     const answers = [
@@ -124,7 +144,7 @@
     }
 
     try {
-      const res = await fetch('/api/recover', {
+      const res = await authFetch('/api/recover', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, answers })

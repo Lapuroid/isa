@@ -165,10 +165,28 @@
     Anvika: '#f59e0b'
   };
 
-  // Render messages safely (allowing simple <br> and <img>)
+  // --- JWT auto logout wrapper ---
+  async function authFetch(url, options = {}) {
+    if (!options.headers) options.headers = {};
+    const token = localStorage.getItem('token');
+    if (token) {
+      options.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const res = await fetch(url, options);
+
+    if (res.status === 401) {
+      alert("Session expired. Please log in again.");
+      localStorage.removeItem('username');
+      localStorage.removeItem('token');
+      window.location.href = '/login.html';
+      throw new Error("Unauthorized");
+    }
+
+    return res;
+  }
+
   function sanitizeContent(html) {
-    // Basic sanitizing to allow <br> and <img src="">
-    // This is very minimal - improve if needed!
     return html
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -201,8 +219,7 @@
 
   async function fetchMessages() {
     try {
-      const res = await fetch('/api/messages');
-      if (!res.ok) throw new Error('Failed to fetch messages');
+      const res = await authFetch('/api/messages');
       const data = await res.json();
       const box = document.getElementById('messages');
       const nearBottom = box.scrollHeight - box.scrollTop <= box.clientHeight + 150;
@@ -231,19 +248,14 @@
 
   async function fetchTokenCount() {
     try {
-      const res = await fetch(`/api/tokens?username=${encodeURIComponent(user)}`);
-      if (!res.ok) throw new Error('Failed to fetch tokens');
-
+      const res = await authFetch(`/api/tokens?username=${encodeURIComponent(user)}`);
       const data = await res.json();
 
       document.getElementById('tokenCount').textContent = `🪙 Tokens: ${data.tokens}`;
-
-      if (data.nextReset) {
-        tokenResetTime = new Date(data.nextReset);
-      } else {
-        tokenResetTime = null;
-        document.getElementById('resetCountdown').textContent = '🔁 Resets in: unknown';
-      }
+      tokenResetTime = data.nextReset ? new Date(data.nextReset) : null;
+      document.getElementById('resetCountdown').textContent = tokenResetTime
+        ? '🔁 Resets in: calculating...'
+        : '🔁 Resets in: unknown';
     } catch (e) {
       document.getElementById('tokenCount').textContent = '🪙 Tokens: error';
       document.getElementById('resetCountdown').textContent = '🔁 Resets in: error';
@@ -253,10 +265,8 @@
 
   function updateCountdown() {
     if (!tokenResetTime) return;
-
     const now = new Date();
     const diff = tokenResetTime - now;
-
     if (diff <= 0) {
       document.getElementById('resetCountdown').textContent = '🔁 Resets in: soon';
       fetchTokenCount();
@@ -264,11 +274,12 @@
     }
 
     const seconds = Math.floor(diff / 1000) % 60;
-    const minutes = Math.floor(diff / (1000 * 60)) % 60;
-    const hours = Math.floor(diff / (1000 * 60 * 60)) % 24;
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const minutes = Math.floor(diff / 60000) % 60;
+    const hours = Math.floor(diff / 3600000) % 24;
+    const days = Math.floor(diff / 86400000);
 
-    document.getElementById('resetCountdown').textContent = `🔁 Resets in: ${days}d ${hours}h ${minutes}m`;
+    document.getElementById('resetCountdown').textContent =
+      `🔁 Resets in: ${days}d ${hours}h ${minutes}m`;
   }
 
   const fileInput = document.getElementById('fileInput');
@@ -280,7 +291,6 @@
 
   fileInput.addEventListener('change', async () => {
     if (fileInput.files.length === 0) return;
-
     const file = fileInput.files[0];
     const formData = new FormData();
     formData.append('file', file);
@@ -290,7 +300,7 @@
       uploadBtn.textContent = 'Uploading...';
       uploadPreview.innerHTML = '';
 
-      const res = await fetch('/upload', {
+      const res = await authFetch('/upload', {
         method: 'POST',
         body: formData
       });
@@ -325,17 +335,16 @@
     }
 
     let messageContent = content;
-
     if (uploadedFileUrl) {
       messageContent += `<br><img src="${uploadedFileUrl}" style="max-width: 100%; max-height: 300px;" />`;
     }
 
     if (messageContent.length > 5000000) {
-      alert("Message too long! Max 5000000 characters allowed.");
+      alert("Message too long! Max 5MB allowed.");
       return;
     }
 
-    const res = await fetch('/api/message', {
+    const res = await authFetch('/api/message', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: user, content: messageContent }),
@@ -354,13 +363,11 @@
   }
 
   document.getElementById('sendBtn').addEventListener('click', sendMessage);
-
-  setInterval(updateTimeAgoLabels, 60 * 1000);
-  setInterval(updateCountdown, 3 *1000);
+  setInterval(updateTimeAgoLabels, 60000);
+  setInterval(updateCountdown, 3000);
 
   fetchMessages();
   fetchTokenCount();
-
 </script>
 </body>
 </html>

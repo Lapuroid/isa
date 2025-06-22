@@ -28,7 +28,6 @@ app.get('/', (req, res) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -60,7 +59,7 @@ const parser = multer({
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (allowedTypes.includes(file.mimetype)) cb(null, true);
-    else cb(new Error('Only image, audio, or video files are allowed'), false);
+    else cb(new Error('Only image files are allowed'), false);
   }
 });
 
@@ -87,7 +86,7 @@ const User = mongoose.model('User', {
   securityAnswers: [String],
 });
 
-const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
+const TWO_WEEKS_MS = 30 * 24 * 60 * 60 * 1000;
 
 async function checkAndResetTokens(username) {
   let userToken = await UserToken.findOne({ username });
@@ -105,14 +104,19 @@ async function checkAndResetTokens(username) {
   return userToken;
 }
 
-// Fixed security answers (lowercase for comparison)
-const fixedSecurityAnswers = [
-  process.env.ans1,
-  process.env.ans2,
-  process.env.ans3,
-  process.env.ans4,
-  process.env.ans5
-];
+// JWT authentication middleware
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Expect: "Bearer TOKEN"
+
+  if (!token) return res.status(401).send('Access token missing');
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.status(401).send('Invalid or expired token');
+    req.user = user; // Attach decoded token (username etc) to request
+    next();
+  });
+}
 
 // Upload
 app.post('/upload', parser.single('file'), (req, res) => {
@@ -120,10 +124,12 @@ app.post('/upload', parser.single('file'), (req, res) => {
   res.json({ url: req.file.path });
 });
 
-// Message send
-app.post('/api/message', async (req, res) => {
-  const { name, content } = req.body;
-  if (!name || !content) return res.status(400).send("Missing name or content");
+// Message send (protected)
+app.post('/api/message', authenticateToken, async (req, res) => {
+  const { content } = req.body;
+  const name = req.user.username;
+
+  if (!content) return res.status(400).send("Missing content");
   if (content.length > 5000000) return res.status(413).send("Message too long");
   if (content.length < 1) return res.status(400).send("Empty message");
 
@@ -138,22 +144,21 @@ app.post('/api/message', async (req, res) => {
   res.status(201).send("Message saved");
 });
 
-// Fetch messages
-app.get('/api/messages', async (req, res) => {
+// Fetch messages (protected)
+app.get('/api/messages', authenticateToken, async (req, res) => {
   const messages = await Message.find().sort({ timestamp: 1 });
   res.json(messages);
 });
 
-// Token info
-app.get('/api/tokens', async (req, res) => {
-  const { username } = req.query;
-  if (!username) return res.status(400).json({ error: 'Missing username' });
+// Token info (protected)
+app.get('/api/tokens', authenticateToken, async (req, res) => {
+  const { username } = req.user;
   const userToken = await checkAndResetTokens(username);
   const nextReset = new Date(userToken.lastReset.getTime() + TWO_WEEKS_MS);
   res.json({ tokens: userToken.tokens, nextReset });
 });
 
-//Login
+// Login (open)
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
@@ -173,7 +178,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-
+// Recovery (open)
 app.post('/api/recover', async (req, res) => {
   const { username, answers } = req.body;
 
@@ -213,7 +218,6 @@ app.post('/api/recover', async (req, res) => {
     res.status(403).send("Not enough correct answers");
   }
 });
-
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
