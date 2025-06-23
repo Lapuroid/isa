@@ -118,16 +118,28 @@ function authenticateToken(req, res, next) {
   });
 }
 
-app.get('/api/keepalive', async (req, res) => {
-  try {
-    await Message.findOne({});  // simple query to ping DB
-    res.status(200).send('DB awake');
-  } catch (err) {
-    console.error('Keepalive error:', err);
-    res.status(500).send('Error');
-  }
-});
-
+// Keepalive handler for both GET and HEAD
+app.route('/api/keepalive')
+  .get(async (req, res) => {
+    try {
+      await Message.findOne({});
+      console.log(`[Keepalive] GET Ping at ${new Date().toISOString()}`);
+      res.status(200).send('DB awake');
+    } catch (err) {
+      console.error('Keepalive GET error:', err.message);
+      res.status(500).send('Error');
+    }
+  })
+  .head(async (req, res) => {
+    try {
+      await Message.findOne({});
+      console.log(`[Keepalive] HEAD Ping at ${new Date().toISOString()}`);
+      res.status(200).end(); // No body for HEAD requests
+    } catch (err) {
+      console.error('Keepalive HEAD error:', err.message);
+      res.status(500).end();
+    }
+  });
 
 // Upload
 app.post('/upload', parser.single('file'), (req, res) => {
