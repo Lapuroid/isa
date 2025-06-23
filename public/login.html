@@ -33,57 +33,87 @@ body::before {
   z-index: 0;
 }
 
+.box {
+  position: relative; /* to be above overlay */
+  background: #1e1e1e;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.7);
+  width: 320px;
+  max-width: 90vw;  /* added for responsive width */
+  color: #e0e0e0;
+  z-index: 1;
+}
 
-    .box {
-      position: relative; /* to be above overlay */
-      background: #1e1e1e;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.7);
-      width: 320px;
-      color: #e0e0e0;
-      z-index: 1;
-    }
-    h2 {
-      margin-bottom: 1.2rem;
-      text-align: center;
-      color: #e0e0e0;
-    }
-    input, button {
-      width: 100%;
-      padding: 0.6rem;
-      font-size: 1rem;
-      margin-top: 1rem;
-      border-radius: 6px;
-      border: 1px solid #444;
-      background-color: #2a2a2a;
-      color: #e0e0e0;
-      box-sizing: border-box;
-    }
-    input::placeholder {
-      color: #999;
-    }
-    button {
-      background: #5865f2;
-      color: white;
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-    button:hover {
-      background: #4752c4;
-    }
-    .link {
-      margin-top: 1rem;
-      text-align: center;
-    }
-    .link a {
-      text-decoration: none;
-      color: #7289da;
-    }
-    .link a:hover {
-      text-decoration: underline;
-    }
+h2 {
+  margin-bottom: 1.2rem;
+  text-align: center;
+  color: #e0e0e0;
+}
+
+input, button {
+  width: 100%;
+  padding: 0.6rem;
+  font-size: 1rem;
+  margin-top: 1rem;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  box-sizing: border-box;
+}
+
+input::placeholder {
+  color: #999;
+}
+
+button {
+  background: #5865f2;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+button:hover {
+  background: #4752c4;
+}
+
+.link {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.link a {
+  text-decoration: none;
+  color: #7289da;
+}
+
+.link a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive tweaks for smaller screens */
+@media (max-width: 480px) {
+  body {
+    padding: 1rem;
+  }
+
+  .box {
+    width: 100%;
+    padding: 1.5rem 1rem;
+    border-radius: 8px;
+  }
+
+  input, button {
+    font-size: 1.1rem; /* slightly bigger for touch */
+    padding: 0.8rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+}
   </style>
 </head>
 <body>
